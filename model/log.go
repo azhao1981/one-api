@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"fmt"
+
 	"github.com/songquanpeng/one-api/common"
 	"github.com/songquanpeng/one-api/common/config"
 	"github.com/songquanpeng/one-api/common/helper"
@@ -23,6 +24,12 @@ type Log struct {
 	PromptTokens     int    `json:"prompt_tokens" gorm:"default:0"`
 	CompletionTokens int    `json:"completion_tokens" gorm:"default:0"`
 	ChannelId        int    `json:"channel" gorm:"index"`
+	ReqText          string `json:"req_text" gorm:"default:''"`
+	RespText         string `json:"resp_text" gorm:"default:''"`
+	RespStartAt      int64  `json:"resp_start_at" gorm:"default:0"`    // 响应开始时间
+	RespDoneAt       int64  `json:"resp_done_at" gorm:"default:0"`     // 响应完成时间
+	Throughput       int    `json:"throughput" gorm:"default:0"`       // 输出通道吞吐量
+	TotalThroughput  int    `json:"total_throughput" gorm:"default:0"` // 总吞吐量
 }
 
 const (
@@ -65,15 +72,28 @@ func RecordTopupLog(userId int, content string, quota int) {
 	}
 }
 
-func RecordConsumeLog(ctx context.Context, userId int, channelId int, promptTokens int, completionTokens int, modelName string, tokenName string, quota int64, content string) {
+func RecordConsumeLog(ctx context.Context, userId int, channelId int, promptTokens int, completionTokens int,
+	modelName string, tokenName string, quota int64, content string,
+	reqText string, respText string, respStartAt int64,
+) {
 	logger.Info(ctx, fmt.Sprintf("record consume log: userId=%d, channelId=%d, promptTokens=%d, completionTokens=%d, modelName=%s, tokenName=%s, quota=%d, content=%s", userId, channelId, promptTokens, completionTokens, modelName, tokenName, quota, content))
+	logger.Debugf(ctx, "record consume reqText: %s", reqText)
+	logger.Debugf(ctx, "record consume respText: %s", respText)
 	if !config.LogConsumeEnabled {
 		return
 	}
+	RespDoneAt := helper.GetMsTimestamp()
+	dur := RespDoneAt - respStartAt
+	if dur < 1 {
+		dur = 1
+	}
+	Throughput := int((float64(completionTokens) / float64(dur/1000.0)) * 100)
+	TotalThroughput := int((float64(completionTokens+promptTokens) / float64(dur/1000.0)) * 100)
+	logger.Debugf(context.TODO(), "RespDoneAt: %d %d %d %d %d %d %d\n", RespDoneAt, respStartAt, dur, promptTokens, completionTokens, Throughput, TotalThroughput)
 	log := &Log{
 		UserId:           userId,
 		Username:         GetUsernameById(userId),
-		CreatedAt:        helper.GetTimestamp(),
+		CreatedAt:        respStartAt / 1000,
 		Type:             LogTypeConsume,
 		Content:          content,
 		PromptTokens:     promptTokens,
@@ -82,6 +102,12 @@ func RecordConsumeLog(ctx context.Context, userId int, channelId int, promptToke
 		ModelName:        modelName,
 		Quota:            int(quota),
 		ChannelId:        channelId,
+		ReqText:          reqText,
+		RespText:         respText,
+		RespStartAt:      respStartAt,
+		RespDoneAt:       RespDoneAt,
+		Throughput:       Throughput,
+		TotalThroughput:  TotalThroughput,
 	}
 	err := LOG_DB.Create(log).Error
 	if err != nil {

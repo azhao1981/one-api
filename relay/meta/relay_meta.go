@@ -1,12 +1,15 @@
 package meta
 
 import (
+	"strings"
+
 	"github.com/gin-gonic/gin"
+	"github.com/songquanpeng/one-api/common"
 	"github.com/songquanpeng/one-api/common/ctxkey"
+	"github.com/songquanpeng/one-api/common/helper"
 	"github.com/songquanpeng/one-api/model"
 	"github.com/songquanpeng/one-api/relay/channeltype"
 	"github.com/songquanpeng/one-api/relay/relaymode"
-	"strings"
 )
 
 type Meta struct {
@@ -27,9 +30,13 @@ type Meta struct {
 	ActualModelName string
 	RequestURLPath  string
 	PromptTokens    int // only for DoResponse
+	RespStartAt     int64
+	ReqText         string
+	RespText        string
 }
 
 func GetByContext(c *gin.Context) *Meta {
+	reqText, _ := common.GetRequestBody(c)
 	meta := Meta{
 		Mode:            relaymode.GetByPath(c.Request.URL.Path),
 		ChannelType:     c.GetInt(ctxkey.Channel),
@@ -43,6 +50,8 @@ func GetByContext(c *gin.Context) *Meta {
 		BaseURL:         c.GetString(ctxkey.BaseURL),
 		APIKey:          strings.TrimPrefix(c.Request.Header.Get("Authorization"), "Bearer "),
 		RequestURLPath:  c.Request.URL.String(),
+		RespStartAt:     helper.GetMsTimestamp(),
+		ReqText:         string(reqText),
 	}
 	cfg, ok := c.Get(ctxkey.Config)
 	if ok {
