@@ -324,10 +324,19 @@ const LogsTable = () => {
               <Table.HeaderCell
                 style={{ cursor: 'pointer' }}
                 onClick={() => {
+                  sortLog('throughput');
+                }}
+                width={1}
+              >
+                速度
+              </Table.HeaderCell>
+              <Table.HeaderCell
+                style={{ cursor: 'pointer' }}
+                onClick={() => {
                   sortLog('content');
                 }}
                 width={isAdminUser ? 4 : 6}
-              >
+              > 
                 详情
               </Table.HeaderCell>
             </Table.Row>
@@ -360,6 +369,7 @@ const LogsTable = () => {
                     <Table.Cell>{log.prompt_tokens ? log.prompt_tokens : ''}</Table.Cell>
                     <Table.Cell>{log.completion_tokens ? log.completion_tokens : ''}</Table.Cell>
                     <Table.Cell>{log.quota ? renderQuota(log.quota, 6) : ''}</Table.Cell>
+                    <Table.Cell>{log.throughput ? `${(log.throughput / 100.0).toFixed(2)}T/S` : ''}</Table.Cell>
                     <Table.Cell>{log.content}</Table.Cell>
                   </Table.Row>
                 );
