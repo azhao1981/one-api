@@ -16,7 +16,7 @@ type Log struct {
 	UserId           int    `json:"user_id" gorm:"index"`
 	CreatedAt        int64  `json:"created_at" gorm:"bigint;index:idx_created_at_type"`
 	Type             int    `json:"type" gorm:"index:idx_created_at_type"`
-	Content          string `json:"content"`
+	Content          string `json:"content" gorm:"type:longtext"`
 	Username         string `json:"username" gorm:"index:index_username_model_name,priority:2;default:''"`
 	TokenName        string `json:"token_name" gorm:"index;default:''"`
 	ModelName        string `json:"model_name" gorm:"index;index:index_username_model_name,priority:1;default:''"`
@@ -24,8 +24,8 @@ type Log struct {
 	PromptTokens     int    `json:"prompt_tokens" gorm:"default:0"`
 	CompletionTokens int    `json:"completion_tokens" gorm:"default:0"`
 	ChannelId        int    `json:"channel" gorm:"index"`
-	ReqText          string `json:"req_text" gorm:"default:''"`
-	RespText         string `json:"resp_text" gorm:"default:''"`
+	ReqText          string `json:"req_text" gorm:"type:longtext"`
+	RespText         string `json:"resp_text" gorm:"type:longtext"`
 	RespStartAt      int64  `json:"resp_start_at" gorm:"default:0"`    // 响应开始时间
 	RespDoneAt       int64  `json:"resp_done_at" gorm:"default:0"`     // 响应完成时间
 	Throughput       int    `json:"throughput" gorm:"default:0"`       // 输出通道吞吐量
