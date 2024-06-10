@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Form, Header, Label, Pagination, Segment, Select, Table } from 'semantic-ui-react';
+import { Button, Form, Header, Label, Pagination, Segment, Select, Table, Popup } from 'semantic-ui-react';
 import { API, isAdmin, showError, timestamp2string } from '../helpers';
 
 import { ITEMS_PER_PAGE } from '../constants';
@@ -12,6 +12,16 @@ function renderTimestamp(timestamp) {
     </>
   );
 }
+const parseUnicodeString = (str) => {
+  try {
+    var j = JSON.parse(str);
+    return JSON.stringify(j);
+  } catch (e) {
+    console.error('parseUnicodeString error:', e); // 打印错误信息到控制台
+    return str; // 返回原始字符串以避免 React 错误
+  }
+};
+
 
 const MODE_OPTIONS = [
   { key: 'all', text: '全部用户', value: 'all' },
@@ -330,15 +340,7 @@ const LogsTable = () => {
               >
                 速度
               </Table.HeaderCell>
-              <Table.HeaderCell
-                style={{ cursor: 'pointer' }}
-                onClick={() => {
-                  sortLog('content');
-                }}
-                width={isAdminUser ? 4 : 6}
-              > 
-                详情
-              </Table.HeaderCell>
+              
             </Table.Row>
           </Table.Header>
 
@@ -366,11 +368,28 @@ const LogsTable = () => {
                     <Table.Cell>{log.token_name ? <Label basic>{log.token_name}</Label> : ''}</Table.Cell>
                     <Table.Cell>{renderType(log.type)}</Table.Cell>
                     <Table.Cell>{log.model_name ? <Label basic>{log.model_name}</Label> : ''}</Table.Cell>
-                    <Table.Cell>{log.prompt_tokens ? log.prompt_tokens : ''}</Table.Cell>
-                    <Table.Cell>{log.completion_tokens ? log.completion_tokens : ''}</Table.Cell>
-                    <Table.Cell>{log.quota ? renderQuota(log.quota, 6) : ''}</Table.Cell>
+                    <Table.Cell>
+                    <Popup
+                      content={parseUnicodeString(log.req_text)}
+                      trigger={<span>{log.prompt_tokens ? log.prompt_tokens : ''}</span>}
+                      on='click'
+                    />
+                    </Table.Cell>
+                    <Table.Cell>
+                    <Popup
+                      content={log.resp_text}
+                      trigger={<span>{log.completion_tokens ? log.completion_tokens : ''}</span>}
+                      on='click'
+                    />
+                    </Table.Cell>
+                    <Table.Cell>
+                    <Popup
+                      content={log.content}
+                      trigger={<span>{log.quota ? renderQuota(log.quota, 6) : ''}</span>}
+                      on='click'
+                    />
+                    </Table.Cell>
                     <Table.Cell>{log.throughput ? `${(log.throughput / 100.0).toFixed(2)}T/S` : ''}</Table.Cell>
-                    <Table.Cell>{log.content}</Table.Cell>
                   </Table.Row>
                 );
               })}
