@@ -3,16 +3,18 @@ package zhipu
 import (
 	"errors"
 	"fmt"
+	"io"
+	"math"
+	"net/http"
+	"strings"
+
 	"github.com/gin-gonic/gin"
+	"github.com/songquanpeng/one-api/common"
 	"github.com/songquanpeng/one-api/relay/adaptor"
 	"github.com/songquanpeng/one-api/relay/adaptor/openai"
 	"github.com/songquanpeng/one-api/relay/meta"
 	"github.com/songquanpeng/one-api/relay/model"
 	"github.com/songquanpeng/one-api/relay/relaymode"
-	"io"
-	"math"
-	"net/http"
-	"strings"
 )
 
 type Adaptor struct {
@@ -126,6 +128,8 @@ func (a *Adaptor) DoResponse(c *gin.Context, resp *http.Response, meta *meta.Met
 			err, usage = Handler(c, resp)
 		}
 	}
+	respBoby, _ := common.GetResponseBody(c)
+	meta.RespText = string(respBoby)
 	return
 }
 
